@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>محاسبه معدل</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --c1: #6c63ff;
+    --c2: #f857a6;
+    --c3: #ff5858;
+    --c4: #43e97b;
+    --c5: #38f9d7;
+    --bg: #0f0e17;
+    --surface: #1a1830;
+    --surface2: #231f3a;
+    --text: #fffffe;
+    --muted: #a7a9be;
+    --border: rgba(108,99,255,0.25);
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Vazirmatn', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top: -100px; right: -100px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(108,99,255,0.18) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -80px; left: -80px;
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, rgba(248,87,166,0.15) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 20px 16px 100px;
+    position: relative; z-index: 1;
+  }
+  .header { text-align: center; padding: 24px 0 20px; }
+  .header-icon {
+    width: 64px; height: 64px;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px;
+    margin: 0 auto 14px;
+    box-shadow: 0 8px 32px rgba(108,99,255,0.4);
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+  .header h1 {
+    font-size: 22px; font-weight: 800;
+    background: linear-gradient(90deg, var(--c1), var(--c2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .header p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .card-label {
+    font-size: 12px; font-weight: 600;
+    color: var(--c1); letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .courses-list { display: flex; flex-direction: column; gap: 10px; }
+  .course-row {
+    display: grid;
+    grid-template-columns: 1fr 60px 72px 34px;
+    gap: 6px;
+    align-items: center;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .course-row input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 13px;
+    padding: 9px 8px;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    text-align: center;
+  }
+  .course-row input:first-child { text-align: right; }
+  .course-row input:focus {
+    border-color: var(--c1);
+    box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
+  }
+  .course-row input::placeholder { color: rgba(167,169,190,0.5); font-size: 12px; }
+  .del-btn {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    background: rgba(248,87,166,0.12);
+    border: 1px solid rgba(248,87,166,0.25);
+    color: var(--c2);
+    font-size: 15px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .del-btn:hover { background: rgba(248,87,166,0.25); }
+  .col-headers {
+    display: grid;
+    grid-template-columns: 1fr 60px 72px 34px;
+    gap: 6px;
+    margin-bottom: 6px;
+    padding: 0 2px;
+  }
+  .col-headers span { font-size: 11px; color: var(--muted); text-align: center; }
+  .col-headers span:first-child { text-align: right; }
+  .add-btn {
+    width: 100%;
+    padding: 10px;
+    background: rgba(108,99,255,0.1);
+    border: 1px dashed rgba(108,99,255,0.4);
+    border-radius: 10px;
+    color: var(--c1);
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .add-btn:hover { background: rgba(108,99,255,0.2); border-style: solid; }
+  .calc-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 16px; font-weight: 800;
+    cursor: pointer;
+    margin-bottom: 16px;
+    box-shadow: 0 8px 24px rgba(108,99,255,0.4);
+    transition: all 0.2s;
+  }
+  .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(108,99,255,0.5); }
+  .calc-btn:active { transform: translateY(0); }
+  .result { display: none; animation: fadeUp 0.4s ease; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .result.show { display: block; }
+  .gpa-display {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .gpa-display::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--c1), var(--c2), var(--c3));
+  }
+  .gpa-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; letter-spacing: 1px; }
+  .gpa-value {
+    font-size: 56px; font-weight: 900;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+  .gpa-units { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .status-badge {
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 15px; font-weight: 700;
+    text-align: center;
+    margin-bottom: 14px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .status-fail { background: rgba(255,88,88,0.15); border: 1px solid rgba(255,88,88,0.3); color: #ff5858; }
+  .status-warn { background: rgba(255,193,7,0.15); border: 1px solid rgba(255,193,7,0.3); color: #ffc107; }
+  .status-ok   { background: rgba(67,233,123,0.15); border: 1px solid rgba(67,233,123,0.3); color: #43e97b; }
+  .status-great{ background: rgba(56,249,215,0.15); border: 1px solid rgba(56,249,215,0.3); color: #38f9d7; }
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .table-title {
+    padding: 12px 16px;
+    font-size: 12px; font-weight: 700;
+    color: var(--c1); letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    padding: 10px 10px;
+    font-size: 11px; font-weight: 700;
+    color: var(--muted); text-align: center;
+    background: var(--surface2); letter-spacing: 0.5px;
+  }
+  thead th:first-child { text-align: right; }
+  tbody tr { border-top: 1px solid rgba(255,255,255,0.04); transition: background 0.15s; }
+  tbody tr:hover { background: rgba(108,99,255,0.07); }
+  tbody td { padding: 11px 10px; font-size: 13px; text-align: center; }
+  tbody td:first-child { text-align: right; font-weight: 500; }
+  .grade-pill {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-weight: 700; font-size: 13px;
+  }
+  .grade-high { background: rgba(67,233,123,0.15); color: #43e97b; }
+  .grade-mid  { background: rgba(56,249,215,0.15); color: #38f9d7; }
+  .grade-low  { background: rgba(255,193,7,0.15);  color: #ffc107; }
+  .grade-fail { background: rgba(255,88,88,0.15);  color: #ff5858; }
+  tfoot td {
+    padding: 10px 10px;
+    font-size: 12px; font-weight: 700;
+    color: var(--c1); text-align: center;
+    background: rgba(108,99,255,0.08);
+    border-top: 1px solid var(--border);
+  }
+  tfoot td:first-child { text-align: right; }
+  .reset-btn {
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    margin-top: 14px;
+    transition: all 0.2s;
+  }
+  .reset-btn:hover { border-color: var(--c1); color: var(--c1); }
+  .error-msg {
+    background: rgba(255,88,88,0.1);
+    border: 1px solid rgba(255,88,88,0.3);
+    border-radius: 10px;
+    color: #ff5858;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 12px;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="header-icon">🎓</div>
+    <h1>محاسبه معدل دانشگاه</h1>
+    <p>نمرات ترم خود را وارد کنید</p>
+  </div>
+
+  <div class="card">
+    <div class="card-label">📚 دروس ترم</div>
+    <div class="col-headers">
+      <span>نام درس</span>
+      <span>واحد</span>
+      <span>نمره</span>
+      <span></span>
+    </div>
+    <div class="courses-list" id="coursesList"></div>
+    <button class="add-btn" onclick="addRow()">＋ افزودن درس</button>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+  <button class="calc-btn" onclick="calculate()">📊 محاسبه معدل</button>
+
+  <div class="result" id="result">
+    <div class="gpa-display">
+      <div class="gpa-label">معدل کل ترم</div>
+      <div class="gpa-value" id="gpaValue">—</div>
+      <div class="gpa-units" id="gpaUnits"></div>
+    </div>
+    <div class="status-badge" id="statusBadge"></div>
+    <div class="table-card">
+      <div class="table-title">📋 جزئیات نمرات</div>
+      <table>
+        <thead>
+          <tr><th>نام درس</th><th>واحد</th><th>نمره</th><th>حاصل‌ضرب</th></tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+        <tfoot id="tableFoot"></tfoot>
+      </table>
+    </div>
+    <button class="reset-btn" onclick="reset()">🔄 شروع مجدد</button>
+  </div>
+</div>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#0f0e17'); tg.setBackgroundColor('#0f0e17'); }
+
+  let rowCount = 0;
+
+  function addRow(name='', units='', grade='') {
+    rowCount++;
+    const id = rowCount;
+    const list = document.getElementById('coursesList');
+    const div = document.createElement('div');
+    div.className = 'course-row';
+    div.id = `row-${id}`;
+    div.innerHTML = `
+      <input type="text"   placeholder="نام درس" value="${name}"  id="name-${id}">
+      <input type="number" placeholder="واحد"    value="${units}" id="units-${id}" min="1" max="6">
+      <input type="number" placeholder="نمره"    value="${grade}" id="grade-${id}" min="0" max="20" step="0.25">
+      <button class="del-btn" onclick="removeRow(${id})">✕</button>
+    `;
+    list.appendChild(div);
+  }
+
+  function removeRow(id) {
+    const el = document.getElementById(`row-${id}`);
+    if (el) el.remove();
+  }
+
+  function getRows() {
+    const rows = document.querySelectorAll('.course-row');
+    const courses = [], errors = [];
+    rows.forEach(row => {
+      const rid = row.id.split('-')[1];
+      const name  = document.getElementById(`name-${rid}`)?.value.trim();
+      const units = parseFloat(document.getElementById(`units-${rid}`)?.value);
+      const grade = parseFloat(document.getElementById(`grade-${rid}`)?.value);
+      if (!name && isNaN(units) && isNaN(grade)) return;
+      if (!name) { errors.push('نام درس خالی است'); return; }
+      if (isNaN(units) || units <= 0) { errors.push(`واحد "${name}" نامعتبر`); return; }
+      if (isNaN(grade) || grade < 0 || grade > 20) { errors.push(`نمره "${name}" باید بین ۰ تا ۲۰ باشد`); return; }
+      courses.push({ name, units, grade });
+    });
+    return { courses, errors };
+  }
+
+  function gradeClass(g) {
+    if (g >= 17) return 'grade-high';
+    if (g >= 14) return 'grade-mid';
+    if (g >= 12) return 'grade-low';
+    return 'grade-fail';
+  }
+
+  function calculate() {
+    const errEl = document.getElementById('errorMsg');
+    errEl.className = 'error-msg';
+    const { courses, errors } = getRows();
+    if (errors.length) { errEl.textContent = '⚠️ ' + errors[0]; errEl.className = 'error-msg show'; return; }
+    if (!courses.length) { errEl.textContent = '⚠️ حداقل یک درس وارد کنید'; errEl.className = 'error-msg show'; return; }
+
+    const totalUnits  = courses.reduce((s,c) => s + c.units, 0);
+    const totalPoints = courses.reduce((s,c) => s + c.units * c.grade, 0);
+    const gpa = totalPoints / totalUnits;
+
+    document.getElementById('gpaValue').textContent = gpa.toFixed(2);
+    document.getElementById('gpaUnits').textContent = `مجموع ${totalUnits} واحد`;
+
+    const badge = document.getElementById('statusBadge');
+    if (gpa < 12)        { badge.className='status-badge status-fail';  badge.innerHTML='😔 شرمنده، شما مشروط شدی!'; }
+    else if (gpa < 12.5) { badge.className='status-badge status-warn';  badge.innerHTML='😅 خوش‌شانسی آوردی، مشروط نشدی!'; }
+    else if (gpa < 14)   { badge.className='status-badge status-ok';    badge.innerHTML='👍 وضعیت قابل قبول'; }
+    else if (gpa < 17)   { badge.className='status-badge status-great'; badge.innerHTML='🌟 عالی، آفرین!'; }
+    else                  { badge.className='status-badge status-ok';    badge.innerHTML='🏆 ممتاز! شاگرد اول هستید!'; }
+
+    document.getElementById('tableBody').innerHTML = courses.map(c => `
+      <tr>
+        <td>${c.name}</td>
+        <td>${c.units}</td>
+        <td><span class="grade-pill ${gradeClass(c.grade)}">${c.grade}</span></td>
+        <td>${(c.units * c.grade).toFixed(2)}</td>
+      </tr>`).join('');
+
+    document.getElementById('tableFoot').innerHTML = `
+      <tr><td>جمع کل</td><td>${totalUnits}</td><td>—</td><td>${totalPoints.toFixed(2)}</td></tr>`;
+
+    const resultEl = document.getElementById('result');
+    resultEl.className = 'result show';
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    if (tg) tg.sendData(JSON.stringify({ gpa: gpa.toFixed(2), units: totalUnits }));
+  }
+
+  function reset() {
+    document.getElementById('coursesList').innerHTML = '';
+    document.getElementById('result').className = 'result';
+    document.getElementById('errorMsg').className = 'error-msg';
+    rowCount = 0;
+    addRow(); addRow(); addRow();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  addRow(); addRow(); addRow();
+</script>
+</body>
+</html>
