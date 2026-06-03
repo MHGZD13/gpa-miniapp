@@ -4,283 +4,53 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Hub</title>
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<link href="https://cdn.jsdelivr.net/npm/vazirmatn@33.003/Vazirmatn-font-face.css" rel="stylesheet">
-
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Vazirmatn;
-}
-
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Readex Pro',sans-serif}
 body{
-
-background:linear-gradient(
-135deg,
-#020617,
-#0f172a,
-#1e1b4b
-);
-
-padding:15px;
-color:white;
-min-height:100vh;
-}
-
-.profile{
-
-padding:20px;
-border-radius:25px;
-
 background:
-rgba(255,255,255,.08);
-
-backdrop-filter:blur(15px);
-
-margin-bottom:15px;
-}
-
-.weather{
-
-padding:20px;
-border-radius:25px;
-
-background:
-linear-gradient(
-135deg,
-#2563eb,
-#1d4ed8
-);
-
-margin-bottom:15px;
-}
-
-.grid{
-
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:12px;
-}
-
-.card{
-
-height:130px;
-
-border-radius:25px;
-
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-
-font-size:18px;
-
-cursor:pointer;
-
-transition:.3s;
-}
-
-.card:hover{
-transform:scale(1.04);
-}
-
-.purple{
-background:linear-gradient(135deg,#581c87,#312e81);
-}
-
-.blue{
-background:linear-gradient(135deg,#1d4ed8,#172554);
-}
-
-.green{
-background:linear-gradient(135deg,#065f46,#022c22);
-}
-
-.orange{
-background:linear-gradient(135deg,#c2410c,#431407);
-}
-
-.pink{
-background:linear-gradient(135deg,#c026d3,#7e22ce);
-}
-
-.games{
-
-margin-top:15px;
-
-padding:20px;
-
-border-radius:25px;
-
-background:
-linear-gradient(
-135deg,
-#9333ea,
-#c026d3
-);
-
-text-align:center;
-}
-
-button{
-
-border:none;
-
-padding:12px;
-
-width:100%;
-
-border-radius:15px;
-
-font-size:16px;
-
-margin-top:8px;
-
-cursor:pointer;
-}
-
+radial-gradient(circle at top left,#7c3aed 0%,transparent 35%),
+radial-gradient(circle at top right,#2563eb 0%,transparent 35%),
+linear-gradient(180deg,#09090b,#111827);
+min-height:100vh;color:#fff;padding:16px}
+.glass{background:rgba(255,255,255,.06);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);border-radius:28px;box-shadow:0 8px 32px rgba(0,0,0,.35)}
+.hero{padding:24px;margin-bottom:16px}
+.hero h1{font-size:32px}
+.hero p{opacity:.8}
+.weather{padding:24px;margin-bottom:16px}
+.weather .temp{font-size:48px;font-weight:700}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{height:160px;border-radius:28px;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.card i{font-size:42px;margin-bottom:12px}
+.gpa{background:linear-gradient(135deg,#8b5cf6,#6d28d9)}
+.schedule{background:linear-gradient(135deg,#3b82f6,#1d4ed8)}
+.tools{background:linear-gradient(135deg,#06b6d4,#0891b2)}
+.notes{background:linear-gradient(135deg,#f97316,#ea580c)}
+.bottom-nav{position:fixed;left:15px;right:15px;bottom:15px;height:70px;background:rgba(255,255,255,.08);backdrop-filter:blur(25px);border-radius:25px;display:flex;justify-content:space-around;align-items:center}
 </style>
-
 </head>
-
 <body>
-
-<div class="profile">
-
-<h2 id="name">دانشجو</h2>
-
-<p id="date"></p>
-
+<div class="hero glass">
+<h1>Student Hub</h1>
+<p>همراه هوشمند دانشجو</p>
 </div>
-
-<div class="weather">
-
-<h2>🌤 آب و هوا</h2>
-
-<p>بندپی شرقی</p>
-
-<h1>27°C</h1>
-
+<div class="weather glass">
+<h2>آب و هوا</h2>
+<div class="temp">27°C</div>
 </div>
-
 <div class="grid">
-
-<div class="card purple" onclick="gpa()">
-🎓
-معدل
+<div class="card gpa"><i class="fa-solid fa-graduation-cap"></i><span>معدل</span></div>
+<div class="card schedule"><i class="fa-solid fa-calendar-days"></i><span>برنامه</span></div>
+<div class="card tools"><i class="fa-solid fa-calculator"></i><span>ابزارها</span></div>
+<div class="card notes"><i class="fa-solid fa-book"></i><span>جزوه‌ها</span></div>
 </div>
-
-<div class="card blue" onclick="convertGPA()">
-📊
-GPA
+<div class="bottom-nav">
+<i class="fa-solid fa-house"></i>
+<i class="fa-solid fa-gamepad"></i>
+<i class="fa-solid fa-bell"></i>
+<i class="fa-solid fa-user"></i>
 </div>
-
-<div class="card green">
-📅
-برنامه
-</div>
-
-<div class="card orange">
-📚
-جزوه
-</div>
-
-<div class="card pink">
-⏰
-یادآور
-</div>
-
-<div class="card blue">
-🧮
-ابزارها
-</div>
-
-</div>
-
-<div class="games">
-
-<h2>🎮 سرگرمی</h2>
-
-<button onclick="coin()">شیر یا خط</button>
-
-<button onclick="dice()">تاس</button>
-
-<button onclick="guess()">حدس عدد</button>
-
-</div>
-
-<script>
-
-const tg = window.Telegram.WebApp;
-
-tg.expand();
-
-if(tg.initDataUnsafe.user){
-
-document.getElementById("name").innerText =
-tg.initDataUnsafe.user.first_name;
-
-}
-
-document.getElementById("date").innerText =
-new Date().toLocaleDateString('fa-IR');
-
-function gpa(){
-
-alert("بخش معدل");
-
-}
-
-function convertGPA(){
-
-let avg = prompt("معدل را وارد کنید");
-
-if(!avg) return;
-
-let gpa = (avg / 5).toFixed(2);
-
-alert("GPA : " + gpa);
-
-}
-
-function coin(){
-
-let result =
-Math.random() > 0.5 ? "شیر" : "خط";
-
-alert(result);
-
-}
-
-function dice(){
-
-alert(
-Math.floor(Math.random()*6)+1
-);
-
-}
-
-function guess(){
-
-let num =
-Math.floor(Math.random()*10)+1;
-
-let user =
-prompt("عدد بین 1 تا 10");
-
-if(Number(user)===num)
-alert("بردی 🎉");
-else
-alert("باختی 😄 عدد "+num);
-
-}
-
-</script>
-
 </body>
 </html>
