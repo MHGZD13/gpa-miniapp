@@ -3,428 +3,533 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>محاسبه معدل</title>
+<title>معدل‌یار</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  :root {
-    --c1: #6c63ff;
-    --c2: #f857a6;
-    --c3: #ff5858;
-    --c4: #43e97b;
-    --c5: #38f9d7;
-    --bg: #0f0e17;
-    --surface: #1a1830;
-    --surface2: #231f3a;
-    --text: #fffffe;
-    --muted: #a7a9be;
-    --border: rgba(108,99,255,0.25);
-    --radius: 16px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Vazirmatn', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-  body::before {
-    content: '';
-    position: fixed;
-    top: -100px; right: -100px;
-    width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(108,99,255,0.18) 0%, transparent 70%);
-    pointer-events: none; z-index: 0;
-  }
-  body::after {
-    content: '';
-    position: fixed;
-    bottom: -80px; left: -80px;
-    width: 350px; height: 350px;
-    background: radial-gradient(circle, rgba(248,87,166,0.15) 0%, transparent 70%);
-    pointer-events: none; z-index: 0;
-  }
-  .container {
-    max-width: 480px;
-    margin: 0 auto;
-    padding: 20px 16px 100px;
-    position: relative; z-index: 1;
-  }
-  .header { text-align: center; padding: 24px 0 20px; }
-  .header-icon {
-    width: 64px; height: 64px;
-    background: linear-gradient(135deg, var(--c1), var(--c2));
-    border-radius: 20px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 30px;
-    margin: 0 auto 14px;
-    box-shadow: 0 8px 32px rgba(108,99,255,0.4);
-    animation: float 3s ease-in-out infinite;
-  }
-  @keyframes float {
-    0%,100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
-  }
-  .header h1 {
-    font-size: 22px; font-weight: 800;
-    background: linear-gradient(90deg, var(--c1), var(--c2));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  }
-  .header p { font-size: 13px; color: var(--muted); margin-top: 4px; }
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 18px;
-    margin-bottom: 14px;
-  }
-  .card-label {
-    font-size: 12px; font-weight: 600;
-    color: var(--c1); letter-spacing: 0.5px;
-    margin-bottom: 10px;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .courses-list { display: flex; flex-direction: column; gap: 10px; }
-  .course-row {
-    display: grid;
-    grid-template-columns: 1fr 60px 72px 34px;
-    gap: 6px;
-    align-items: center;
-    animation: slideIn 0.3s ease;
-  }
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .course-row input {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: 'Vazirmatn', sans-serif;
-    font-size: 13px;
-    padding: 9px 8px;
-    outline: none;
-    width: 100%;
-    transition: border-color 0.2s, box-shadow 0.2s;
-    text-align: center;
-  }
-  .course-row input:first-child { text-align: right; }
-  .course-row input:focus {
-    border-color: var(--c1);
-    box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
-  }
-  .course-row input::placeholder { color: rgba(167,169,190,0.5); font-size: 12px; }
-  .del-btn {
-    width: 34px; height: 34px;
-    border-radius: 10px;
-    background: rgba(248,87,166,0.12);
-    border: 1px solid rgba(248,87,166,0.25);
-    color: var(--c2);
-    font-size: 15px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s;
-    flex-shrink: 0;
-  }
-  .del-btn:hover { background: rgba(248,87,166,0.25); }
-  .col-headers {
-    display: grid;
-    grid-template-columns: 1fr 60px 72px 34px;
-    gap: 6px;
-    margin-bottom: 6px;
-    padding: 0 2px;
-  }
-  .col-headers span { font-size: 11px; color: var(--muted); text-align: center; }
-  .col-headers span:first-child { text-align: right; }
-  .add-btn {
-    width: 100%;
-    padding: 10px;
-    background: rgba(108,99,255,0.1);
-    border: 1px dashed rgba(108,99,255,0.4);
-    border-radius: 10px;
-    color: var(--c1);
-    font-family: 'Vazirmatn', sans-serif;
-    font-size: 13px; font-weight: 600;
-    cursor: pointer;
-    margin-top: 10px;
-    transition: all 0.2s;
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-  }
-  .add-btn:hover { background: rgba(108,99,255,0.2); border-style: solid; }
-  .calc-btn {
-    width: 100%;
-    padding: 16px;
-    background: linear-gradient(135deg, var(--c1), var(--c2));
-    border: none;
-    border-radius: var(--radius);
-    color: #fff;
-    font-family: 'Vazirmatn', sans-serif;
-    font-size: 16px; font-weight: 800;
-    cursor: pointer;
-    margin-bottom: 16px;
-    box-shadow: 0 8px 24px rgba(108,99,255,0.4);
-    transition: all 0.2s;
-  }
-  .calc-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(108,99,255,0.5); }
-  .calc-btn:active { transform: translateY(0); }
-  .result { display: none; animation: fadeUp 0.4s ease; }
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  .result.show { display: block; }
-  .gpa-display {
-    background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    text-align: center;
-    margin-bottom: 14px;
-    position: relative;
-    overflow: hidden;
-  }
-  .gpa-display::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--c1), var(--c2), var(--c3));
-  }
-  .gpa-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; letter-spacing: 1px; }
-  .gpa-value {
-    font-size: 56px; font-weight: 900;
-    background: linear-gradient(135deg, var(--c1), var(--c2));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    line-height: 1;
-  }
-  .gpa-units { font-size: 12px; color: var(--muted); margin-top: 6px; }
-  .status-badge {
-    border-radius: 12px;
-    padding: 14px 18px;
-    font-size: 15px; font-weight: 700;
-    text-align: center;
-    margin-bottom: 14px;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-  }
-  .status-fail { background: rgba(255,88,88,0.15); border: 1px solid rgba(255,88,88,0.3); color: #ff5858; }
-  .status-warn { background: rgba(255,193,7,0.15); border: 1px solid rgba(255,193,7,0.3); color: #ffc107; }
-  .status-ok   { background: rgba(67,233,123,0.15); border: 1px solid rgba(67,233,123,0.3); color: #43e97b; }
-  .status-great{ background: rgba(56,249,215,0.15); border: 1px solid rgba(56,249,215,0.3); color: #38f9d7; }
-  .table-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-  }
-  .table-title {
-    padding: 12px 16px;
-    font-size: 12px; font-weight: 700;
-    color: var(--c1); letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--border);
-  }
-  table { width: 100%; border-collapse: collapse; }
-  thead th {
-    padding: 10px 10px;
-    font-size: 11px; font-weight: 700;
-    color: var(--muted); text-align: center;
-    background: var(--surface2); letter-spacing: 0.5px;
-  }
-  thead th:first-child { text-align: right; }
-  tbody tr { border-top: 1px solid rgba(255,255,255,0.04); transition: background 0.15s; }
-  tbody tr:hover { background: rgba(108,99,255,0.07); }
-  tbody td { padding: 11px 10px; font-size: 13px; text-align: center; }
-  tbody td:first-child { text-align: right; font-weight: 500; }
-  .grade-pill {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 20px;
-    font-weight: 700; font-size: 13px;
-  }
-  .grade-high { background: rgba(67,233,123,0.15); color: #43e97b; }
-  .grade-mid  { background: rgba(56,249,215,0.15); color: #38f9d7; }
-  .grade-low  { background: rgba(255,193,7,0.15);  color: #ffc107; }
-  .grade-fail { background: rgba(255,88,88,0.15);  color: #ff5858; }
-  tfoot td {
-    padding: 10px 10px;
-    font-size: 12px; font-weight: 700;
-    color: var(--c1); text-align: center;
-    background: rgba(108,99,255,0.08);
-    border-top: 1px solid var(--border);
-  }
-  tfoot td:first-child { text-align: right; }
-  .reset-btn {
-    width: 100%;
-    padding: 12px;
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--muted);
-    font-family: 'Vazirmatn', sans-serif;
-    font-size: 13px;
-    cursor: pointer;
-    margin-top: 14px;
-    transition: all 0.2s;
-  }
-  .reset-btn:hover { border-color: var(--c1); color: var(--c1); }
-  .error-msg {
-    background: rgba(255,88,88,0.1);
-    border: 1px solid rgba(255,88,88,0.3);
-    border-radius: 10px;
-    color: #ff5858;
-    padding: 10px 14px;
-    font-size: 13px;
-    margin-bottom: 12px;
-    display: none;
-  }
-  .error-msg.show { display: block; }
+:root {
+  --bg: #0a0a0f;
+  --s1: #12111a;
+  --s2: #1c1a28;
+  --s3: #252334;
+  --accent: #7c6aff;
+  --pink: #ff6b9d;
+  --cyan: #00d4ff;
+  --green: #00e5a0;
+  --yellow: #ffd166;
+  --red: #ff4757;
+  --text: #f0eeff;
+  --muted: #7a7890;
+  --border: rgba(124,106,255,0.2);
+  --r: 14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'Vazirmatn',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+
+/* NAV TABS */
+.tabs{display:flex;background:var(--s1);border-bottom:1px solid var(--border);flex-shrink:0;position:relative;z-index:10}
+.tab{flex:1;padding:13px 4px 10px;text-align:center;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s;border-bottom:2px solid transparent;letter-spacing:.3px}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-icon{font-size:18px;display:block;margin-bottom:3px}
+
+/* PAGES */
+.pages{flex:1;overflow:hidden;position:relative}
+.page{position:absolute;inset:0;overflow-y:auto;padding:16px 14px 90px;display:none;animation:fadeIn .25s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--pink))}
+.card-title{font-size:12px;font-weight:700;color:var(--accent);letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+
+/* INPUTS */
+.col-head{display:grid;grid-template-columns:1fr 58px 70px 32px;gap:6px;margin-bottom:5px;padding:0 2px}
+.col-head span{font-size:10px;color:var(--muted);text-align:center}
+.col-head span:first-child{text-align:right}
+.course-row{display:grid;grid-template-columns:1fr 58px 70px 32px;gap:6px;align-items:center;margin-bottom:7px;animation:slideIn .25s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
+.inp{background:var(--s2);border:1px solid var(--border);border-radius:9px;color:var(--text);font-family:'Vazirmatn',sans-serif;font-size:13px;padding:8px 9px;outline:none;width:100%;transition:border-color .2s,box-shadow .2s;text-align:center}
+.inp:first-child{text-align:right}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,106,255,.15)}
+.inp::placeholder{color:rgba(122,120,144,.5);font-size:11px}
+.del-btn{width:32px;height:32px;border-radius:8px;background:rgba(255,107,157,.1);border:1px solid rgba(255,107,157,.25);color:var(--pink);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.del-btn:active{transform:scale(.9)}
+.add-btn{width:100%;padding:9px;background:rgba(124,106,255,.08);border:1px dashed rgba(124,106,255,.35);border-radius:9px;color:var(--accent);font-family:'Vazirmatn',sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin-top:6px;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:5px}
+.add-btn:active{background:rgba(124,106,255,.18)}
+
+/* PRIMARY BTN */
+.primary-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--accent),var(--pink));border:none;border-radius:var(--r);color:#fff;font-family:'Vazirmatn',sans-serif;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 6px 20px rgba(124,106,255,.35);transition:all .2s;margin-bottom:12px}
+.primary-btn:active{transform:scale(.98);box-shadow:0 3px 10px rgba(124,106,255,.3)}
+.ghost-btn{width:100%;padding:11px;background:transparent;border:1px solid var(--border);border-radius:var(--r);color:var(--muted);font-family:'Vazirmatn',sans-serif;font-size:13px;cursor:pointer;transition:all .2s}
+.ghost-btn:active{border-color:var(--accent);color:var(--accent)}
+
+/* GPA HERO */
+.gpa-hero{text-align:center;padding:20px 16px 16px;background:linear-gradient(135deg,var(--s2),var(--s3));border-radius:var(--r);margin-bottom:12px;position:relative;overflow:hidden}
+.gpa-hero::after{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;background:radial-gradient(circle,rgba(124,106,255,.2),transparent 70%);pointer-events:none}
+.gpa-label{font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
+.gpa-num{font-size:58px;font-weight:900;line-height:1;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.gpa-units{font-size:11px;color:var(--muted);margin-top:5px}
+.status-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;margin-top:12px}
+.chip-fail{background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.3);color:var(--red)}
+.chip-warn{background:rgba(255,209,102,.12);border:1px solid rgba(255,209,102,.3);color:var(--yellow)}
+.chip-ok{background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.3);color:var(--green)}
+.chip-great{background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.3);color:var(--cyan)}
+
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.stat-box{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.stat-val{font-size:22px;font-weight:800;color:var(--accent)}
+.stat-lbl{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* TABLE */
+.grade-table{width:100%;border-collapse:collapse}
+.grade-table th{padding:8px 10px;font-size:10px;font-weight:700;color:var(--muted);text-align:center;background:var(--s2);letter-spacing:.3px}
+.grade-table th:first-child{text-align:right}
+.grade-table td{padding:9px 10px;font-size:12px;text-align:center;border-top:1px solid rgba(255,255,255,.04)}
+.grade-table td:first-child{text-align:right;font-weight:500}
+.grade-table tr:hover td{background:rgba(124,106,255,.05)}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-weight:700;font-size:12px}
+.pill-a{background:rgba(0,229,160,.12);color:var(--green)}
+.pill-b{background:rgba(0,212,255,.12);color:var(--cyan)}
+.pill-c{background:rgba(255,209,102,.12);color:var(--yellow)}
+.pill-d{background:rgba(255,71,87,.12);color:var(--red)}
+.tfoot-row td{background:rgba(124,106,255,.08);font-weight:700;font-size:11px;color:var(--accent);border-top:1px solid var(--border)}
+
+/* CHART */
+.chart-wrap{position:relative;height:200px;margin-top:8px}
+
+/* HISTORY */
+.term-card{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .2s;position:relative}
+.term-card:active{border-color:var(--accent)}
+.term-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.term-name{font-size:13px;font-weight:700}
+.term-gpa{font-size:18px;font-weight:900;color:var(--accent)}
+.term-meta{font-size:11px;color:var(--muted)}
+.term-del{position:absolute;top:10px;left:10px;width:26px;height:26px;border-radius:7px;background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.2);color:var(--red);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.overall-box{background:linear-gradient(135deg,rgba(124,106,255,.15),rgba(255,107,157,.1));border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center;margin-bottom:12px}
+.overall-val{font-size:40px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.overall-lbl{font-size:11px;color:var(--muted);margin-top:3px}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-icon{font-size:40px;margin-bottom:10px;display:block}
+
+/* GOAL PAGE */
+.goal-section{margin-bottom:14px}
+.goal-label{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:7px}
+.goal-inp-wrap{position:relative}
+.goal-inp{background:var(--s2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Vazirmatn',sans-serif;font-size:16px;font-weight:700;padding:12px 16px;outline:none;width:100%;transition:border-color .2s;text-align:center}
+.goal-inp:focus{border-color:var(--accent)}
+.predict-result{background:var(--s2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-top:10px;display:none}
+.predict-result.show{display:block}
+.predict-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
+.predict-item:last-child{border:none}
+.predict-item b{color:var(--accent)}
+.min-warn{color:var(--red);font-size:12px;margin-top:4px}
+.min-ok{color:var(--green);font-size:12px;margin-top:4px}
+
+/* ERR */
+.err{background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.25);border-radius:9px;color:var(--red);padding:9px 13px;font-size:12px;margin-bottom:10px;display:none}
+.err.show{display:block}
+
+/* TOAST */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--s3);border:1px solid var(--border);border-radius:20px;padding:9px 18px;font-size:12px;font-weight:600;color:var(--text);opacity:0;transition:all .3s;pointer-events:none;z-index:999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 </style>
 </head>
 <body>
-<div class="container">
-  <div class="header">
-    <div class="header-icon">🎓</div>
-    <h1>محاسبه معدل دانشگاه</h1>
-    <p>نمرات ترم خود را وارد کنید</p>
-  </div>
 
-  <div class="card">
-    <div class="card-label">📚 دروس ترم</div>
-    <div class="col-headers">
-      <span>نام درس</span>
-      <span>واحد</span>
-      <span>نمره</span>
-      <span></span>
-    </div>
-    <div class="courses-list" id="coursesList"></div>
-    <button class="add-btn" onclick="addRow()">＋ افزودن درس</button>
-  </div>
-
-  <div class="error-msg" id="errorMsg"></div>
-  <button class="calc-btn" onclick="calculate()">📊 محاسبه معدل</button>
-
-  <div class="result" id="result">
-    <div class="gpa-display">
-      <div class="gpa-label">معدل کل ترم</div>
-      <div class="gpa-value" id="gpaValue">—</div>
-      <div class="gpa-units" id="gpaUnits"></div>
-    </div>
-    <div class="status-badge" id="statusBadge"></div>
-    <div class="table-card">
-      <div class="table-title">📋 جزئیات نمرات</div>
-      <table>
-        <thead>
-          <tr><th>نام درس</th><th>واحد</th><th>نمره</th><th>حاصل‌ضرب</th></tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-        <tfoot id="tableFoot"></tfoot>
-      </table>
-    </div>
-    <button class="reset-btn" onclick="reset()">🔄 شروع مجدد</button>
-  </div>
+<div class="tabs">
+  <div class="tab active" onclick="goTab(0)"><span class="tab-icon">📝</span>ورود نمرات</div>
+  <div class="tab" onclick="goTab(1)"><span class="tab-icon">📊</span>نتایج</div>
+  <div class="tab" onclick="goTab(2)"><span class="tab-icon">🎯</span>هدف</div>
+  <div class="tab" onclick="goTab(3)"><span class="tab-icon">📚</span>تاریخچه</div>
 </div>
 
+<div class="pages">
+
+  <!-- PAGE 0: INPUT -->
+  <div class="page active" id="page0">
+    <div class="card">
+      <div class="card-title">📝 دروس این ترم</div>
+      <div class="col-head">
+        <span>نام درس</span><span>واحد</span><span>نمره</span><span></span>
+      </div>
+      <div id="coursesList"></div>
+      <button class="add-btn" onclick="addRow()">＋ افزودن درس</button>
+    </div>
+
+    <div class="card" style="padding:14px 16px">
+      <div class="card-title">⚙️ تنظیمات ترم</div>
+      <div class="goal-label">نام ترم (اختیاری)</div>
+      <input class="goal-inp" id="termName" placeholder="مثلاً: ترم ۱ - ۱۴۰۳" style="margin-bottom:0;font-size:13px;font-weight:500">
+    </div>
+
+    <div class="err" id="errMsg"></div>
+    <button class="primary-btn" onclick="calculate()">📊 محاسبه معدل</button>
+  </div>
+
+  <!-- PAGE 1: RESULTS -->
+  <div class="page" id="page1">
+    <div class="gpa-hero" id="gpaHero">
+      <div class="gpa-label">معدل کل ترم</div>
+      <div class="gpa-num" id="gpaNum">—</div>
+      <div class="gpa-units" id="gpaUnits"></div>
+      <div id="statusChip"></div>
+    </div>
+
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="card">
+      <div class="card-title">📋 جدول نمرات</div>
+      <div style="overflow-x:auto">
+        <table class="grade-table">
+          <thead><tr><th>درس</th><th>واحد</th><th>نمره</th><th>حاصل‌ضرب</th></tr></thead>
+          <tbody id="tableBody"></tbody>
+          <tfoot id="tableFoot"></tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📈 نمودار نمرات</div>
+      <div class="chart-wrap"><canvas id="gradeChart"></canvas></div>
+    </div>
+
+    <button class="primary-btn" onclick="saveToHistory()">💾 ذخیره در تاریخچه</button>
+    <button class="ghost-btn" onclick="resetAll()">🔄 شروع مجدد</button>
+  </div>
+
+  <!-- PAGE 2: GOAL -->
+  <div class="page" id="page2">
+    <div class="card">
+      <div class="card-title">🎯 هدف‌گذاری معدل</div>
+      <div class="goal-label">معدل هدف من</div>
+      <input class="goal-inp" id="targetGPA" type="number" placeholder="مثلاً: 16" min="0" max="20" step="0.25" oninput="calcGoal()">
+      <div class="predict-result" id="goalResult"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔮 پیش‌بینی نمره</div>
+      <div class="goal-label">اگه نمره درس X رو تغییر بدم، معدلم میشه؟</div>
+      <div id="predictList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚠️ آستانه مشروطی</div>
+      <div id="cautionInfo" style="font-size:13px;color:var(--muted);line-height:1.8"></div>
+    </div>
+  </div>
+
+  <!-- PAGE 3: HISTORY -->
+  <div class="page" id="page3">
+    <div class="overall-box" id="overallBox" style="display:none">
+      <div class="overall-lbl">معدل کل کارشناسی</div>
+      <div class="overall-val" id="overallVal">—</div>
+      <div class="gpa-units" id="overallUnits"></div>
+    </div>
+    <div class="card" style="display:none" id="historyChartCard">
+      <div class="card-title">📈 روند معدل ترم‌ها</div>
+      <div class="chart-wrap"><canvas id="historyChart"></canvas></div>
+    </div>
+    <div id="termsList"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-  const tg = window.Telegram?.WebApp;
-  if (tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#0f0e17'); tg.setBackgroundColor('#0f0e17'); }
+const tg = window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand();tg.setHeaderColor('#0a0a0f');tg.setBackgroundColor('#0a0a0f')}
 
-  let rowCount = 0;
+let rowId=0, courses=[], gpaVal=0, chartInst=null, histChartInst=null;
 
-  function addRow(name='', units='', grade='') {
-    rowCount++;
-    const id = rowCount;
-    const list = document.getElementById('coursesList');
-    const div = document.createElement('div');
-    div.className = 'course-row';
-    div.id = `row-${id}`;
-    div.innerHTML = `
-      <input type="text"   placeholder="نام درس" value="${name}"  id="name-${id}">
-      <input type="number" placeholder="واحد"    value="${units}" id="units-${id}" min="1" max="6">
-      <input type="number" placeholder="نمره"    value="${grade}" id="grade-${id}" min="0" max="20" step="0.25">
-      <button class="del-btn" onclick="removeRow(${id})">✕</button>
-    `;
-    list.appendChild(div);
+// ── TABS ──────────────────────────────────────────────────
+function goTab(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  document.querySelectorAll('.page').forEach((p,j)=>p.classList.toggle('active',i===j));
+  if(i===2) renderGoalPage();
+  if(i===3) renderHistory();
+}
+
+// ── ROW MANAGEMENT ───────────────────────────────────────
+function addRow(n='',u='',g=''){
+  rowId++;
+  const id=rowId;
+  const div=document.createElement('div');
+  div.className='course-row';div.id=`r${id}`;
+  div.innerHTML=`
+    <input class="inp" placeholder="نام درس" value="${n}" id="n${id}">
+    <input class="inp" type="number" placeholder="3" value="${u}" id="u${id}" min="1" max="6">
+    <input class="inp" type="number" placeholder="17" value="${g}" id="g${id}" min="0" max="20" step="0.25">
+    <button class="del-btn" onclick="delRow(${id})">✕</button>`;
+  document.getElementById('coursesList').appendChild(div);
+}
+function delRow(id){const e=document.getElementById(`r${id}`);if(e)e.remove()}
+
+// ── PARSE ─────────────────────────────────────────────────
+function parseRows(){
+  const rows=document.querySelectorAll('.course-row');
+  const list=[],errs=[];
+  rows.forEach(r=>{
+    const id=r.id.slice(1);
+    const name=document.getElementById(`n${id}`)?.value.trim();
+    const units=parseFloat(document.getElementById(`u${id}`)?.value);
+    const grade=parseFloat(document.getElementById(`g${id}`)?.value);
+    if(!name&&isNaN(units)&&isNaN(grade))return;
+    if(!name){errs.push('نام درس خالی است');return}
+    if(isNaN(units)||units<=0){errs.push(`واحد "${name}" نامعتبر`);return}
+    if(isNaN(grade)||grade<0||grade>20){errs.push(`نمره "${name}" باید ۰ تا ۲۰ باشد`);return}
+    list.push({name,units,grade});
+  });
+  return{list,errs};
+}
+
+// ── CALCULATE ─────────────────────────────────────────────
+function calculate(){
+  const errEl=document.getElementById('errMsg');
+  errEl.className='err';
+  const{list,errs}=parseRows();
+  if(errs.length){errEl.textContent='⚠️ '+errs[0];errEl.className='err show';return}
+  if(!list.length){errEl.textContent='⚠️ حداقل یک درس وارد کنید';errEl.className='err show';return}
+
+  courses=list;
+  const totalU=courses.reduce((s,c)=>s+c.units,0);
+  const totalP=courses.reduce((s,c)=>s+c.units*c.grade,0);
+  gpaVal=totalP/totalU;
+
+  renderResults(gpaVal,totalU,totalP);
+  goTab(1);
+}
+
+// ── RENDER RESULTS ────────────────────────────────────────
+function pillClass(g){if(g>=17)return'pill-a';if(g>=14)return'pill-b';if(g>=12)return'pill-c';return'pill-d'}
+
+function renderResults(gpa,totalU,totalP){
+  document.getElementById('gpaNum').textContent=gpa.toFixed(2);
+  document.getElementById('gpaUnits').textContent=`مجموع ${totalU} واحد`;
+
+  // status chip
+  let chipClass,chipText;
+  if(gpa<12){chipClass='chip-fail';chipText='😔 مشروط شدی!'}
+  else if(gpa<12.5){chipClass='chip-warn';chipText='😅 از مشروطی در رفتی!'}
+  else if(gpa<14){chipClass='chip-ok';chipText='👍 وضعیت قابل قبول'}
+  else if(gpa<17){chipClass='chip-great';chipText='🌟 عالی، آفرین!'}
+  else{chipClass='chip-ok';chipText='🏆 ممتاز! شاگرد اول!'}
+  document.getElementById('statusChip').innerHTML=`<div class="status-chip ${chipClass}">${chipText}</div>`;
+
+  // stats
+  const best=courses.reduce((a,b)=>b.grade>a.grade?b:a);
+  const worst=courses.reduce((a,b)=>b.grade<a.grade?b:a);
+  document.getElementById('statGrid').innerHTML=`
+    <div class="stat-box"><div class="stat-val" style="color:var(--green)">${best.grade}</div><div class="stat-lbl">🏅 بهترین: ${best.name}</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--red)">${worst.grade}</div><div class="stat-lbl">⚠️ ضعیف‌ترین: ${worst.name}</div></div>
+    <div class="stat-box"><div class="stat-val">${courses.length}</div><div class="stat-lbl">تعداد دروس</div></div>
+    <div class="stat-box"><div class="stat-val" style="color:var(--cyan)">${courses.filter(c=>c.grade>=10).length}</div><div class="stat-lbl">دروس قبولی</div></div>`;
+
+  // table
+  document.getElementById('tableBody').innerHTML=courses.map(c=>`
+    <tr><td>${c.name}</td><td>${c.units}</td>
+    <td><span class="pill ${pillClass(c.grade)}">${c.grade}</span></td>
+    <td>${(c.units*c.grade).toFixed(2)}</td></tr>`).join('');
+  document.getElementById('tableFoot').innerHTML=`
+    <tr class="tfoot-row"><td>جمع کل</td><td>${totalU}</td><td>—</td><td>${totalP.toFixed(2)}</td></tr>`;
+
+  // chart
+  renderChart();
+}
+
+function renderChart(){
+  if(chartInst)chartInst.destroy();
+  const ctx=document.getElementById('gradeChart').getContext('2d');
+  chartInst=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:courses.map(c=>c.name.length>8?c.name.slice(0,8)+'…':c.name),
+      datasets:[{
+        data:courses.map(c=>c.grade),
+        backgroundColor:courses.map(c=>c.grade>=17?'rgba(0,229,160,.7)':c.grade>=14?'rgba(0,212,255,.7)':c.grade>=12?'rgba(255,209,102,.7)':'rgba(255,71,87,.7)'),
+        borderRadius:6,borderSkipped:false
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{rtl:true,callbacks:{label:ctx=>`نمره: ${ctx.parsed.y}`}}},
+      scales:{
+        x:{ticks:{color:'#7a7890',font:{family:'Vazirmatn',size:10}},grid:{display:false}},
+        y:{min:0,max:20,ticks:{color:'#7a7890',font:{family:'Vazirmatn',size:10},stepSize:5},grid:{color:'rgba(255,255,255,.05)'}}
+      }
+    }
+  });
+}
+
+// ── GOAL PAGE ─────────────────────────────────────────────
+function renderGoalPage(){
+  if(!courses.length){
+    document.getElementById('goalResult').innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center">ابتدا نمرات را وارد کنید</div>';
+    document.getElementById('goalResult').className='predict-result show';
+    document.getElementById('predictList').innerHTML='<div style="color:var(--muted);font-size:13px">ابتدا نمرات را وارد کنید</div>';
+    document.getElementById('cautionInfo').innerHTML='—';
+    return;
+  }
+  calcGoal();
+  renderPredictList();
+  renderCaution();
+}
+
+function calcGoal(){
+  if(!courses.length)return;
+  const target=parseFloat(document.getElementById('targetGPA').value);
+  const res=document.getElementById('goalResult');
+  if(isNaN(target)||target<0||target>20){res.className='predict-result';return}
+
+  const totalU=courses.reduce((s,c)=>s+c.units,0);
+  const needed=target*totalU;
+  const current=courses.reduce((s,c)=>s+c.units*c.grade,0);
+  const diff=needed-current;
+  const avg=diff/totalU;
+
+  let html=`<div class="predict-item"><span>معدل فعلی</span><b>${gpaVal.toFixed(2)}</b></div>
+  <div class="predict-item"><span>معدل هدف</span><b>${target}</b></div>
+  <div class="predict-item"><span>میانگین تغییر لازم</span><b>${avg>0?'+':''}${avg.toFixed(2)}</b></div>`;
+
+  if(avg<=0) html+=`<div class="min-ok">✅ هم‌اکنون به هدفت رسیدی!</div>`;
+  else if(avg>5) html+=`<div class="min-warn">❌ هدف خیلی بالاست — دست‌نیافتنی با نمرات فعلی</div>`;
+  else html+=`<div class="min-ok">💡 قابل دسترس با تلاش بیشتر</div>`;
+
+  res.innerHTML=html;res.className='predict-result show';
+}
+
+function renderPredictList(){
+  const list=document.getElementById('predictList');
+  list.innerHTML=courses.map((c,i)=>{
+    const totalU=courses.reduce((s,x)=>s+x.units,0);
+    const totalP=courses.reduce((s,x)=>s+x.units*x.grade,0);
+    const scenarios=[12,14,16,18,20].map(g=>{
+      const newP=totalP-c.units*c.grade+c.units*g;
+      return `<span style="font-size:11px;color:var(--muted)">${g}→<b style="color:var(--accent)">${(newP/totalU).toFixed(1)}</b></span>`;
+    }).join(' ');
+    return `<div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:5px">${c.name} (فعلی: ${c.grade})</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">${scenarios}</div></div>`;
+  }).join('');
+}
+
+function renderCaution(){
+  const totalU=courses.reduce((s,c)=>s+c.units,0);
+  const totalP=courses.reduce((s,c)=>s+c.units*c.grade,0);
+  const gpa=totalP/totalU;
+  const toSafe=(12*totalU-totalP);
+  const toDanger=(12.5*totalU-totalP);
+  let html='';
+  if(gpa>=12.5) html=`<span style="color:var(--green)">✅ خطر مشروطی نداری!</span><br>معدلت ${gpa.toFixed(2)} هست و از آستانه ۱۲.۵ بالاتری.`;
+  else if(gpa>=12) html=`<span style="color:var(--yellow)">⚠️ خطر مشروطی داری!</span><br>معدلت ${gpa.toFixed(2)} هست. برای خروج از خطر باید میانگین نمراتت ${(toDanger/totalU).toFixed(2)} نمره بیشتر بشه.`;
+  else html=`<span style="color:var(--red)">🚨 مشروط شدی!</span><br>معدلت ${gpa.toFixed(2)} هست. برای رسیدن به ۱۲ باید مجموعاً ${toSafe.toFixed(1)} نمره‌ی واحدی بیشتر داشتی.`;
+  document.getElementById('cautionInfo').innerHTML=html;
+}
+
+// ── HISTORY ───────────────────────────────────────────────
+function saveToHistory(){
+  if(!courses.length){showToast('ابتدا نمرات را وارد کنید');return}
+  const name=document.getElementById('termName').value.trim()||`ترم ${new Date().toLocaleDateString('fa-IR')}`;
+  const totalU=courses.reduce((s,c)=>s+c.units,0);
+  const totalP=courses.reduce((s,c)=>s+c.units*c.grade,0);
+  const gpa=totalP/totalU;
+  const history=getHistory();
+  history.push({name,gpa:parseFloat(gpa.toFixed(2)),units:totalU,points:totalP,courses:[...courses],date:new Date().toISOString()});
+  localStorage.setItem('gpa_history',JSON.stringify(history));
+  showToast('✅ ترم ذخیره شد!');
+}
+
+function getHistory(){
+  try{return JSON.parse(localStorage.getItem('gpa_history'))||[]}catch{return[]}
+}
+
+function delTerm(i){
+  const h=getHistory();h.splice(i,1);
+  localStorage.setItem('gpa_history',JSON.stringify(h));
+  renderHistory();
+}
+
+function renderHistory(){
+  const h=getHistory();
+  const termsList=document.getElementById('termsList');
+  const overallBox=document.getElementById('overallBox');
+  const chartCard=document.getElementById('historyChartCard');
+
+  if(!h.length){
+    termsList.innerHTML=`<div class="empty-state"><span class="empty-icon">📭</span>هنوز ترمی ذخیره نشده<br><small>پس از محاسبه معدل، ذخیره کنید</small></div>`;
+    overallBox.style.display='none';chartCard.style.display='none';return;
   }
 
-  function removeRow(id) {
-    const el = document.getElementById(`row-${id}`);
-    if (el) el.remove();
-  }
+  const totalU=h.reduce((s,t)=>s+t.units,0);
+  const totalP=h.reduce((s,t)=>s+t.points,0);
+  const overall=totalP/totalU;
+  document.getElementById('overallVal').textContent=overall.toFixed(2);
+  document.getElementById('overallUnits').textContent=`${h.length} ترم — مجموع ${totalU} واحد`;
+  overallBox.style.display='block';chartCard.style.display='block';
 
-  function getRows() {
-    const rows = document.querySelectorAll('.course-row');
-    const courses = [], errors = [];
-    rows.forEach(row => {
-      const rid = row.id.split('-')[1];
-      const name  = document.getElementById(`name-${rid}`)?.value.trim();
-      const units = parseFloat(document.getElementById(`units-${rid}`)?.value);
-      const grade = parseFloat(document.getElementById(`grade-${rid}`)?.value);
-      if (!name && isNaN(units) && isNaN(grade)) return;
-      if (!name) { errors.push('نام درس خالی است'); return; }
-      if (isNaN(units) || units <= 0) { errors.push(`واحد "${name}" نامعتبر`); return; }
-      if (isNaN(grade) || grade < 0 || grade > 20) { errors.push(`نمره "${name}" باید بین ۰ تا ۲۰ باشد`); return; }
-      courses.push({ name, units, grade });
-    });
-    return { courses, errors };
-  }
+  termsList.innerHTML=h.map((t,i)=>`
+    <div class="term-card">
+      <button class="term-del" onclick="delTerm(${i})">✕</button>
+      <div class="term-header">
+        <div class="term-name">${t.name}</div>
+        <div class="term-gpa">${t.gpa}</div>
+      </div>
+      <div class="term-meta">${t.units} واحد • ${t.courses?.length||0} درس • ${new Date(t.date).toLocaleDateString('fa-IR')}</div>
+    </div>`).join('');
 
-  function gradeClass(g) {
-    if (g >= 17) return 'grade-high';
-    if (g >= 14) return 'grade-mid';
-    if (g >= 12) return 'grade-low';
-    return 'grade-fail';
-  }
+  // history chart
+  if(histChartInst)histChartInst.destroy();
+  const ctx=document.getElementById('historyChart').getContext('2d');
+  histChartInst=new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:h.map(t=>t.name.slice(0,10)),
+      datasets:[{
+        data:h.map(t=>t.gpa),
+        borderColor:'rgba(124,106,255,1)',
+        backgroundColor:'rgba(124,106,255,.1)',
+        borderWidth:2,pointRadius:5,
+        pointBackgroundColor:'rgba(124,106,255,1)',
+        fill:true,tension:.4
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{ticks:{color:'#7a7890',font:{family:'Vazirmatn',size:10}},grid:{display:false}},
+        y:{min:0,max:20,ticks:{color:'#7a7890',font:{family:'Vazirmatn',size:10},stepSize:5},grid:{color:'rgba(255,255,255,.05)'}}
+      }
+    }
+  });
+}
 
-  function calculate() {
-    const errEl = document.getElementById('errorMsg');
-    errEl.className = 'error-msg';
-    const { courses, errors } = getRows();
-    if (errors.length) { errEl.textContent = '⚠️ ' + errors[0]; errEl.className = 'error-msg show'; return; }
-    if (!courses.length) { errEl.textContent = '⚠️ حداقل یک درس وارد کنید'; errEl.className = 'error-msg show'; return; }
+// ── UTILS ─────────────────────────────────────────────────
+function resetAll(){
+  courses=[];gpaVal=0;
+  document.getElementById('coursesList').innerHTML='';
+  document.getElementById('termName').value='';
+  rowId=0;addRow();addRow();addRow();
+  goTab(0);
+}
 
-    const totalUnits  = courses.reduce((s,c) => s + c.units, 0);
-    const totalPoints = courses.reduce((s,c) => s + c.units * c.grade, 0);
-    const gpa = totalPoints / totalUnits;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast show';
+  setTimeout(()=>t.className='toast',2500);
+}
 
-    document.getElementById('gpaValue').textContent = gpa.toFixed(2);
-    document.getElementById('gpaUnits').textContent = `مجموع ${totalUnits} واحد`;
-
-    const badge = document.getElementById('statusBadge');
-    if (gpa < 12)        { badge.className='status-badge status-fail';  badge.innerHTML='😔 شرمنده، شما مشروط شدی!'; }
-    else if (gpa < 12.5) { badge.className='status-badge status-warn';  badge.innerHTML='😅 خوش‌شانسی آوردی، مشروط نشدی!'; }
-    else if (gpa < 14)   { badge.className='status-badge status-ok';    badge.innerHTML='👍 وضعیت قابل قبول'; }
-    else if (gpa < 17)   { badge.className='status-badge status-great'; badge.innerHTML='🌟 عالی، آفرین!'; }
-    else                  { badge.className='status-badge status-ok';    badge.innerHTML='🏆 ممتاز! شاگرد اول هستید!'; }
-
-    document.getElementById('tableBody').innerHTML = courses.map(c => `
-      <tr>
-        <td>${c.name}</td>
-        <td>${c.units}</td>
-        <td><span class="grade-pill ${gradeClass(c.grade)}">${c.grade}</span></td>
-        <td>${(c.units * c.grade).toFixed(2)}</td>
-      </tr>`).join('');
-
-    document.getElementById('tableFoot').innerHTML = `
-      <tr><td>جمع کل</td><td>${totalUnits}</td><td>—</td><td>${totalPoints.toFixed(2)}</td></tr>`;
-
-    const resultEl = document.getElementById('result');
-    resultEl.className = 'result show';
-    resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    if (tg) tg.sendData(JSON.stringify({ gpa: gpa.toFixed(2), units: totalUnits }));
-  }
-
-  function reset() {
-    document.getElementById('coursesList').innerHTML = '';
-    document.getElementById('result').className = 'result';
-    document.getElementById('errorMsg').className = 'error-msg';
-    rowCount = 0;
-    addRow(); addRow(); addRow();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  addRow(); addRow(); addRow();
+// ── INIT ──────────────────────────────────────────────────
+addRow();addRow();addRow();
 </script>
 </body>
 </html>
