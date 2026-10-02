@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>دانیار | Danyar</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-color: #020108;
+  --bg-glass-heavy: rgba(22, 22, 30, 0.65);
+  --bg-glass-medium: rgba(35, 35, 48, 0.45);
+  --bg-glass-light: rgba(55, 55, 75, 0.35);
+  --label-primary: #FFFFFF;
+  --label-secondary: rgba(235, 235, 245, 0.6);
+  --separator: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --ios-blue: #0A84FF;
+  --ios-green: #30D158;
+  --ios-orange: #FF9F0A;
+  --ios-red: #FF453A;
+  --ios-purple: #BF5AF2;
+  --safe-top: env(safe-area-inset-top, 20px);
+  --safe-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body {
+  height: 100%; width: 100%; overflow: hidden;
+  background: radial-gradient(circle at 50% 0%, #150a21 0%, #050510 70%, #000000 100%);
+  color: var(--label-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Vazirmatn', sans-serif;
+}
+button, input, textarea { font-family: inherit; outline: none; border: none; }
+button { cursor: pointer; }
+
+#bgCanvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+
+.app-container { display: flex; flex-direction: column; height: 100dvh; position: relative; z-index: 1; }
+
+.header-bar {
+  padding: calc(var(--safe-top) + 10px) 20px 12px;
+  background: rgba(12, 12, 18, 0.45);
+  backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+  border-bottom: 0.5px solid var(--separator);
+  display: flex; justify-content: space-between; align-items: center;
+  position: relative; z-index: 10;
+}
+.header-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+.header-action { color: var(--ios-blue); font-size: 15px; font-weight: 600; background: none; }
+
+.pages-wrapper { flex: 1; position: relative; overflow: hidden; }
+.page {
+  position: absolute; inset: 0;
+  overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch;
+  padding: 16px 16px calc(var(--safe-bottom) + 85px);
+  display: none; flex-direction: column; gap: 16px;
+  animation: pageFade 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.page.active { display: flex; }
+@keyframes pageFade { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* Tab Bar */
+.tab-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(15, 15, 22, 0.55);
+  backdrop-filter: blur(30px) saturate(160%); -webkit-backdrop-filter: blur(30px) saturate(160%);
+  border-top: 0.5px solid var(--separator);
+  display: flex; justify-content: space-around;
+  padding: 10px 10px calc(var(--safe-bottom) + 5px);
+  z-index: 100;
+}
+.tab-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  color: var(--label-secondary); background: none; width: 60px;
+}
+.tab-item.active { color: var(--ios-blue); }
+.tab-icon { font-size: 22px; transition: transform 0.25s; filter: grayscale(100%) opacity(0.6); }
+.tab-item.active .tab-icon { filter: grayscale(0%) opacity(1); transform: scale(1.15); }
+.tab-label { font-size: 10px; font-weight: 600; }
+
+/* Cards & Lists */
+.ios-card {
+  background: var(--bg-glass-heavy);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--glass-border);
+  border-radius: 20px; padding: 16px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+.card-icon-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.icon-bg { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.card-val { font-size: 24px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.card-lbl { font-size: 12px; color: var(--label-secondary); font-weight: 500; }
+
+.ios-list {
+  background: var(--bg-glass-heavy);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--glass-border);
+  border-radius: 16px; overflow: hidden;
+}
+.ios-list-item {
+  padding: 12px 16px; border-bottom: 0.5px solid var(--separator);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.ios-list-item:last-child { border-bottom: none; }
+.item-title { font-size: 15px; font-weight: 600; color: var(--label-primary); }
+.item-sub { font-size: 12px; color: var(--label-secondary); margin-top: 2px; }
+.item-value { font-size: 14px; font-weight: 700; color: var(--ios-blue); direction: ltr; }
+
+/* Segmented Control */
+.segmented-control {
+  background: var(--bg-glass-medium);
+  backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+  border: 0.5px solid var(--glass-border);
+  border-radius: 10px; padding: 3px;
+  display: flex; width: 100%;
+}
+.seg-btn {
+  flex: 1; padding: 6px 0; font-size: 12.5px; font-weight: 600; color: var(--label-primary);
+  background: transparent; border-radius: 7px; transition: all 0.2s;
+}
+.seg-btn.active { background: rgba(255,255,255,0.18); box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+
+/* Inputs & Buttons */
+.ios-input {
+  background: var(--bg-glass-light); border: 0.5px solid var(--glass-border);
+  border-radius: 12px; padding: 12px 14px;
+  color: var(--label-primary); font-size: 14.5px; width: 100%;
+}
+.ios-input::placeholder { color: var(--label-secondary); }
+.ios-btn-primary {
+  background: var(--ios-blue); color: #fff; border-radius: 14px; padding: 13px;
+  font-size: 15px; font-weight: 600; width: 100%; text-align: center;
+  box-shadow: 0 6px 16px rgba(10, 132, 255, 0.35);
+}
+.ios-btn-primary:active { opacity: 0.8; transform: scale(0.98); }
+
+/* Tasks */
+.task-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 0.5px solid var(--separator); }
+.task-row:last-child { border-bottom: none; }
+.check-circle { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--label-secondary); display: flex; align-items: center; justify-content: center; }
+.task-row.done .check-circle { background: var(--ios-blue); border-color: var(--ios-blue); }
+.task-row.done .check-circle::after { content: '✓'; color: #fff; font-size: 13px; }
+.task-row.done .item-title { text-decoration: line-through; color: var(--label-secondary); }
+.task-del { color: var(--ios-red); background: none; font-size: 16px; padding: 4px; margin-right: auto; }
+
+/* Modals & Toast */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+  z-index: 200; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.modal-overlay.show { opacity: 1; pointer-events: auto; }
+.modal-box {
+  background: var(--bg-glass-heavy); border: 0.5px solid var(--glass-border);
+  border-radius: 22px; width: 88%; padding: 20px;
+  transform: scale(0.92); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-overlay.show .modal-box { transform: scale(1); }
+.modal-title { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 14px; }
+
+.toast {
+  position: fixed; top: calc(var(--safe-top) + 16px); left: 50%; transform: translate(-50%, -50px);
+  background: rgba(255,255,255,0.95); color: #000; padding: 10px 20px; border-radius: 25px;
+  font-size: 13px; font-weight: 600; opacity: 0; transition: all 0.3s; z-index: 300; pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* استایل جدول ماتریسی برنامه هفتگی (مطابق سبک تصویر) */
+.timetable-wrapper {
+  background: #f8fafc;
+  border-radius: 24px;
+  padding: 22px 16px;
+  color: #1e293b;
+  overflow-x: auto;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+}
+.timetable-header-title {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.timetable-header-title h2 {
+  font-size: 24px;
+  font-weight: 900;
+  color: #0f172a;
+}
+.timetable-header-title p {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 2px;
+}
+.timetable-grid {
+  display: grid;
+  grid-template-columns: 80px repeat(5, minmax(135px, 1fr));
+  gap: 10px;
+  min-width: 740px;
+  direction: rtl;
+}
+
+.time-col-header { height: 44px; }
+.time-slot-label {
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  direction: ltr;
+}
+
+.day-pill-header {
+  height: 44px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  border: 1.5px solid transparent;
+}
+.day-pill-header.sat { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+.day-pill-header.sun { background: #fef9c3; border-color: #facc15; color: #854d0e; }
+.day-pill-header.mon { background: #e0f2fe; border-color: #38bdf8; color: #0369a1; }
+.day-pill-header.tue { background: #dcfce7; border-color: #4ade80; color: #15803d; }
+.day-pill-header.wed { background: #f3e8ff; border-color: #c084fc; color: #7e22ce; }
+
+.class-cell {
+  height: 90px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.class-card {
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.04);
+}
+.class-card.border-sun { border-color: #fde047; }
+.class-card.border-mon { border-color: #7dd3fc; }
+.class-card.border-tue { border-color: #86efac; }
+.class-card.border-wed { border-color: #d8b4fe; }
+.class-card.border-sat { border-color: #cbd5e1; }
+
+.class-card .c-name {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #1e293b;
+  line-height: 1.35;
+  margin-bottom: 3px;
+}
+.class-card .c-loc {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+}
+.class-card .c-del {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.class-card .c-badge {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #fdf2f8;
+  border: 1.5px solid #f472b6;
+  color: #db2777;
+  padding: 3px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+/* GPA Styles */
+.gpa-ring { width: 120px; height: 120px; margin: 0 auto 10px; position: relative; }
+.gpa-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-track { fill: none; stroke: var(--bg-glass-light); stroke-width: 9; }
+.ring-fill { fill: none; stroke-width: 9; stroke-linecap: round; stroke: var(--ios-blue); transition: stroke-dashoffset 1s ease; }
+.gpa-content-section { display: none; flex-direction: column; gap: 14px; }
+.gpa-content-section.active { display: flex; }
+.gpa-pill { padding: 4px 12px; border-radius: 16px; font-size: 12px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<div class="app-container">
+  
+  <div class="header-bar">
+    <div class="header-title" id="pageTitle">دانیار</div>
+    <button class="header-action" id="headerAction" style="display:none;"></button>
+  </div>
+
+  <div class="pages-wrapper">
+    
+    <!-- 🏠 خانه -->
+    <div class="page active" id="pg-home">
+      <div>
+        <div style="font-size:13px; color:var(--label-secondary); font-weight:500;">خوش آمدید،</div>
+        <div style="font-size:26px; font-weight:800;" id="userName">مهدی قربان‌زاده</div>
+      </div>
+
+      <div class="ios-card" onclick="switchTab('schedule')">
+        <div class="card-icon-header">
+          <div class="icon-bg" style="background: rgba(10, 132, 255, 0.15); color: var(--ios-blue);">🗓️</div>
+          <div style="font-size:11.5px; color:var(--ios-blue); font-weight:700; background: rgba(10,132,255,0.1); padding: 3px 8px; border-radius: 10px;" id="todayName">امروز</div>
+        </div>
+        <div class="card-val" id="todayCount">۰</div>
+        <div class="card-lbl">کلاس برای امروز</div>
+      </div>
+
+      <div style="display: flex; gap: 12px;">
+        <div class="ios-card" style="flex:1" onclick="switchTab('tasks')">
+          <div class="card-icon-header">
+            <div class="icon-bg" style="background: rgba(48, 209, 88, 0.15); color: var(--ios-green);">✅</div>
+          </div>
+          <div class="card-val" id="pendingTasks">۰</div>
+          <div class="card-lbl">تکلیف باز</div>
+        </div>
+        <div class="ios-card" style="flex:1" onclick="switchTab('pomo')">
+          <div class="card-icon-header">
+            <div class="icon-bg" style="background: rgba(255, 159, 10, 0.15); color: var(--ios-orange);">⏱️</div>
+          </div>
+          <div class="card-val">۲۵</div>
+          <div class="card-lbl">پومودورو</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🗓️ برنامه هفتگی -->
+    <div class="page" id="pg-schedule">
+      <div class="segmented-control">
+        <button class="seg-btn active" id="btn-wf-all" onclick="setWeekFilter('all')">همه</button>
+        <button class="seg-btn" id="btn-wf-odd" onclick="setWeekFilter('odd')">فرد</button>
+        <button class="seg-btn" id="btn-wf-even" onclick="setWeekFilter('even')">زوج</button>
+      </div>
+
+      <button class="ios-btn-primary" style="background: var(--bg-glass-medium); color: var(--ios-blue); border: 0.5px solid var(--glass-border); box-shadow: none;" onclick="downloadSchedulePng()">
+        📸 دانلود پوستر برنامه (PNG)
+      </button>
+
+      <div id="scheduleContainer" style="display:flex; flex-direction:column; gap:16px;"></div>
+    </div>
+
+    <!-- ✅ تکالیف -->
+    <div class="page" id="pg-tasks">
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="taskInput" class="ios-input" placeholder="یادآوری یا تکلیف جدید...">
+        <button class="ios-btn-primary" style="width:54px; border-radius:12px;" onclick="addTask()">+</button>
+      </div>
+      <div class="ios-list" id="taskListContainer"></div>
+    </div>
+
+    <!-- 📊 معدل -->
+    <div class="page" id="pg-gpa">
+      <div class="segmented-control">
+        <button class="seg-btn active" id="gtab-input" onclick="switchGpaTab('input')">ورودی</button>
+        <button class="seg-btn" id="gtab-result" onclick="switchGpaTab('result')">نتیجه</button>
+        <button class="seg-btn" id="gtab-whatif" onclick="switchGpaTab('whatif')">شبیه‌ساز</button>
+        <button class="seg-btn" id="gtab-history" onclick="switchGpaTab('history')">تاریخچه</button>
+      </div>
+
+      <div id="gpat-input" class="gpa-content-section active">
+        <div class="ios-card" style="padding:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div style="font-size:13.5px; font-weight:700;">ترم: <span id="curTermLabel" style="color:var(--ios-blue)">ترم ۱</span></div>
+            <div style="display:flex; gap:6px;">
+              <button onclick="removeLastTerm()" style="background:rgba(255,69,58,0.15); color:var(--ios-red); width:26px; height:26px; border-radius:6px; font-weight:bold;">-</button>
+              <button onclick="addNewTerm()" style="background:rgba(10,132,255,0.15); color:var(--ios-blue); width:26px; height:26px; border-radius:6px; font-weight:bold;">+</button>
+            </div>
+          </div>
+          <div style="display:flex; gap:6px; overflow-x:auto; padding-bottom:4px;" id="termBar"></div>
+        </div>
+
+        <div class="ios-list" id="coursesList"></div>
+        <button class="ios-btn-primary" style="background:var(--bg-glass-medium); color:var(--ios-blue); border: 1px dashed var(--glass-border);" onclick="addGpaRow()">+ افزودن درس</button>
+        <button class="ios-btn-primary" onclick="calcGpa()">محاسبه معدل</button>
+      </div>
+
+      <div id="gpat-result" class="gpa-content-section">
+        <div id="gpaResEmpty" class="ios-card" style="text-align:center; padding:24px; color:var(--label-secondary); font-size:13px;">ابتدا نمرات را وارد کرده و دکمه محاسبه را بزنید.</div>
+        
+        <div id="gpaResContent" style="display:none; flex-direction:column; gap:14px;">
+          <div class="ios-card" style="text-align:center;">
+            <div class="gpa-ring">
+              <svg viewBox="0 0 120 120">
+                <circle class="ring-track" cx="60" cy="60" r="52"/>
+                <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"/>
+              </svg>
+              <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                <div style="font-size:30px; font-weight:900;" id="gpaVal">—</div>
+              </div>
+            </div>
+            <div id="gpaPill" class="gpa-pill">وضعیت</div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div class="ios-card" style="text-align:center; padding:10px;"><div style="font-size:20px; font-weight:800; color:var(--ios-blue);" id="sUnits">—</div><div style="font-size:11px; color:var(--label-secondary);">مجموع واحد</div></div>
+            <div class="ios-card" style="text-align:center; padding:10px;"><div style="font-size:20px; font-weight:800; color:var(--ios-purple);" id="sCnt">—</div><div style="font-size:11px; color:var(--label-secondary);">تعداد درس</div></div>
+            <div class="ios-card" style="text-align:center; padding:10px;"><div style="font-size:20px; font-weight:800; color:var(--ios-green);" id="sBest">—</div><div style="font-size:11px; color:var(--label-secondary);">بهترین نمره</div></div>
+            <div class="ios-card" style="text-align:center; padding:10px;"><div style="font-size:20px; font-weight:800; color:var(--ios-red);" id="sWorst">—</div><div style="font-size:11px; color:var(--label-secondary);">ضعیف‌ترین</div></div>
+          </div>
+
+          <div class="ios-card">
+            <div style="font-size:12px; font-weight:700; margin-bottom:8px; color:var(--label-secondary);">نمودار نمرات</div>
+            <div style="position:relative; height:150px;"><canvas id="gradeChart"></canvas></div>
+          </div>
+
+          <div class="ios-list" id="gpaTable"></div>
+          <button class="ios-btn-primary" style="background:var(--bg-glass-medium); color:var(--label-primary);" onclick="saveTerm()">💾 ذخیره ترم</button>
+        </div>
+      </div>
+
+      <div id="gpat-whatif" class="gpa-content-section">
+        <div class="ios-card">
+          <div style="font-size:15px; font-weight:700; margin-bottom:4px;">🔮 شبیه‌ساز نمره</div>
+          <div style="font-size:12px; color:var(--label-secondary); margin-bottom:14px;">اگر این درس اضافه شود، معدل چه تغییری می‌کند؟</div>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <input class="ios-input" id="wiUnits" type="number" placeholder="تعداد واحد" min="1" max="6">
+            <input class="ios-input" id="wiGrade" type="number" placeholder="نمره هدف" min="0" max="20" step="0.25">
+            <button class="ios-btn-primary" onclick="calcWhatIf()">محاسبه معدل جدید</button>
+          </div>
+          <div id="wiResult" style="display:none; margin-top:14px; padding:10px; border-radius:10px; background:rgba(10,132,255,0.12); text-align:center; font-size:14px; font-weight:700; color:var(--ios-blue);"></div>
+        </div>
+      </div>
+
+      <div id="gpat-history" class="gpa-content-section">
+        <div id="histEmpty" class="ios-card" style="text-align:center; padding:24px; color:var(--label-secondary); font-size:13px;">هنوز ترمی ذخیره نشده است.</div>
+        <div id="histContent" style="display:none; flex-direction:column; gap:14px;">
+          <div class="ios-card" style="text-align:center;">
+            <div style="font-size:13px; color:var(--label-secondary);">معدل کل کارشناسی</div>
+            <div id="overallGpa" style="font-size:40px; font-weight:900; color:var(--ios-blue);">—</div>
+            <div id="overallUnits" style="font-size:12px; color:var(--label-secondary); margin-top:2px;"></div>
+          </div>
+          <div class="ios-card">
+            <div style="font-size:12px; font-weight:700; margin-bottom:8px; color:var(--label-secondary);">روند معدل ترم‌ها</div>
+            <div style="position:relative; height:150px;"><canvas id="histChart"></canvas></div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;" id="termsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⏱️ پومودورو -->
+    <div class="page" id="pg-pomo">
+      <div class="segmented-control">
+        <button class="seg-btn active" id="pmo-btn-25" onclick="setPomo(25)">تمرکز (۲۵)</button>
+        <button class="seg-btn" id="pmo-btn-5" onclick="setPomo(5)">استراحت (۵)</button>
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:center; padding:50px 0;">
+        <div style="font-size:74px; font-weight:200; font-variant-numeric: tabular-nums;" id="pomoDisplay">25:00</div>
+      </div>
+
+      <div style="display:flex; gap:12px;">
+        <button class="ios-btn-primary" style="background:var(--bg-glass-medium); border:0.5px solid var(--glass-border); color:var(--label-primary); flex:1;" onclick="resetPomo()">بازنشانی</button>
+        <button class="ios-btn-primary" style="background:var(--ios-green); flex:2;" id="pomoPlayBtn" onclick="togglePomo()">شروع</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="tab-bar">
+    <button class="tab-item active" id="tab-home" onclick="switchTab('home')">
+      <span class="tab-icon">🏠</span><span class="tab-label">خانه</span>
+    </button>
+    <button class="tab-item" id="tab-schedule" onclick="switchTab('schedule')">
+      <span class="tab-icon">🗓️</span><span class="tab-label">برنامه</span>
+    </button>
+    <button class="tab-item" id="tab-tasks" onclick="switchTab('tasks')">
+      <span class="tab-icon">✅</span><span class="tab-label">تکالیف</span>
+    </button>
+    <button class="tab-item" id="tab-gpa" onclick="switchTab('gpa')">
+      <span class="tab-icon">📊</span><span class="tab-label">معدل</span>
+    </button>
+  </div>
+
+</div>
+
+<!-- Modal وارد کردن کد برنامه -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal-box">
+    <div class="modal-title">وارد کردن کد برنامه</div>
+    <textarea id="jsonInput" class="ios-input" style="height:110px; direction:ltr; font-family:monospace; margin-bottom:14px; font-size:12px;" placeholder='{"source":"danyar_weekly_plan"...}'></textarea>
+    <div style="display:flex; gap:8px;">
+      <button class="ios-btn-primary" style="background:rgba(255,255,255,0.1); color:var(--label-primary);" onclick="closeModal('importModal')">لغو</button>
+      <button class="ios-btn-primary" onclick="processImport()">ذخیره</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// انیمیشن کهکشان
+(function(){
+  const canvas = document.getElementById('bgCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [], nebulas = [];
+
+  function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; init(); }
+  function init(){
+    stars = []; nebulas = [];
+    for(let i=0; i<70; i++) {
+      stars.push({ x: Math.random()*W, y: Math.random()*H, r: Math.random()*1.4 + 0.2, a: Math.random()*0.6 + 0.1, sp: Math.random()*0.005 + 0.001 });
+    }
+    const colors = ['rgba(139,92,246,', 'rgba(10,132,255,', 'rgba(191,90,242,'];
+    for(let i=0; i<3; i++){
+      nebulas.push({ x: Math.random()*W, y: Math.random()*H, r: Math.random()*140 + 90, c: colors[i], dx: (Math.random()-0.5)*0.18, dy: (Math.random()-0.5)*0.18 });
+    }
+  }
+  let frame = 0;
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    nebulas.forEach(n => {
+      n.x += n.dx; n.y += n.dy;
+      if(n.x < -n.r) n.x = W+n.r; if(n.x > W+n.r) n.x = -n.r;
+      if(n.y < -n.r) n.y = H+n.r; if(n.y > H+n.r) n.y = -n.r;
+      const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+      g.addColorStop(0, n.c + '0.07)'); g.addColorStop(1, n.c + '0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI*2); ctx.fill();
+    });
+    stars.forEach(s => {
+      ctx.fillStyle = `rgba(255, 255, 255, ${s.a * (0.5 + 0.5 * Math.sin(frame * s.sp))})`;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
+    });
+    frame++; requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', resize);
+  resize(); draw();
+})();
+
+const tg = window.Telegram?.WebApp;
+if(tg) { tg.ready(); tg.expand(); try { tg.setHeaderColor('#000000'); tg.setBackgroundColor('#000000'); } catch(e){} }
+function triggerHaptic(s = 'light') { try { tg?.HapticFeedback?.impactOccurred(s); } catch(e){} }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+function safeGet(k, def) { try { return JSON.parse(localStorage.getItem(k)) ?? def; } catch(e){ return def; } }
+function safeSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+
+const pageTitles = { home: 'دانیار', schedule: 'برنامه کلاسی', tasks: 'تکالیف', gpa: 'معدل', pomo: 'پومودورو' };
+
+function switchTab(id) {
+  triggerHaptic();
+  document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+  document.getElementById(`tab-${id>='pomo'?'home':id}`)?.classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[id] || 'دانیار';
+  
+  const actionBtn = document.getElementById('headerAction');
+  actionBtn.style.display = 'none'; actionBtn.onclick = null;
+  
+  if (id === 'schedule') {
+    actionBtn.style.display = 'block'; actionBtn.textContent = 'وارد کردن'; actionBtn.onclick = () => openModal('importModal');
+  } else if (id === 'home') {
+    actionBtn.style.display = 'block'; actionBtn.textContent = 'تنظیم نام';
+    actionBtn.onclick = () => { const n = prompt("نام خود را وارد کنید:"); if(n) { safeSet('danyar_name', n); updateHome(); } };
+  }
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('pg-' + id).classList.add('active');
+  
+  if(id === 'home') updateHome();
+  if(id === 'schedule') renderSchedule();
+  if(id === 'tasks') renderTasks();
+  if(id === 'gpa') initGpaRows();
+}
+
+function openModal(id) { triggerHaptic(); document.getElementById(id).classList.add('show'); }
+function closeModal(id) { triggerHaptic(); document.getElementById(id).classList.remove('show'); }
+
+// ۱. خانه
+function updateHome() {
+  document.getElementById('userName').textContent = safeGet('danyar_name', 'مهدی قربان‌زاده');
+  const DAYS = ['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه','شنبه'];
+  const todayName = DAYS[new Date().getDay()];
+  document.getElementById('todayName').textContent = todayName;
+  const sched = safeGet('danyar_schedule', {});
+  document.getElementById('todayCount').textContent = (sched[todayName] || []).length;
+  document.getElementById('pendingTasks').textContent = safeGet('danyar_tasks', []).filter(t => !t.done).length;
+}
+
+// ۲. برنامه هفتگی (جدول ماتریسی)
+let weekFilter = 'all';
+
+const TIME_SLOTS = [
+  { label: '۰۸:۰۰ - ۱۰:۰۰', startH: 8 },
+  { label: '۱۰:۰۰ - ۱۲:۰۰', startH: 10 },
+  { label: '۱۳:۰۰ - ۱۵:۰۰', startH: 13 },
+  { label: '۱۵:۰۰ - ۱۷:۰۰', startH: 15 },
+  { label: '۱۷:۰۰ - ۱۹:۰۰', startH: 17 }
+];
+
+const DISPLAY_DAYS = [
+  { key: 'شنبه', label: 'شنبه', cls: 'sat' },
+  { key: 'یکشنبه', label: 'یکشنبه', cls: 'sun' },
+  { key: 'دوشنبه', label: 'دوشنبه', cls: 'mon' },
+  { key: 'سه‌شنبه', label: 'سه‌‌شنبه', cls: 'tue' },
+  { key: 'چهارشنبه', label: 'چهارشنبه', cls: 'wed' }
+];
+
+function setWeekFilter(type) {
+  triggerHaptic(); weekFilter = type;
+  document.querySelectorAll('#pg-schedule .seg-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`btn-wf-${type}`).classList.add('active');
+  renderSchedule();
+}
+
+function deleteClass(day, index) {
+  triggerHaptic('medium');
+  if(confirm("آیا از حذف این کلاس اطمینان دارید؟")) {
+    const sched = safeGet('danyar_schedule', {});
+    if(sched[day] && sched[day][index] !== undefined) {
+      sched[day].splice(index, 1);
+      safeSet('danyar_schedule', sched);
+      showToast('کلاس حذف شد');
+      renderSchedule();
+      updateHome();
+    }
+  }
+}
+
+function renderSchedule() {
+  const sched = safeGet('danyar_schedule', {});
+  const container = document.getElementById('scheduleContainer');
+  const stuName = safeGet('danyar_name', 'مهدی قربان‌زاده');
+
+  let gridHtml = `
+    <div class="timetable-wrapper" id="captureTarget">
+      <div class="timetable-header-title">
+        <h2>برنامه هفتگی</h2>
+        <p>${stuName} • مهندسی شیمی • ترم جاری</p>
+      </div>
+
+      <div class="timetable-grid">
+        <div class="time-col-header"></div>
+  `;
+
+  DISPLAY_DAYS.forEach(d => {
+    gridHtml += `<div class="day-pill-header ${d.cls}">${d.label}</div>`;
+  });
+
+  TIME_SLOTS.forEach(slot => {
+    gridHtml += `<div class="time-slot-label">${slot.label}</div>`;
+
+    DISPLAY_DAYS.forEach(d => {
+      const dayClasses = sched[d.key] || [];
+      const matched = dayClasses
+        .map((c, originalIndex) => ({ ...c, originalIndex }))
+        .filter(c => {
+          if (!c.start) return false;
+          const h = parseInt(c.start.split(':')[0], 10);
+          return h >= slot.startH && h < (slot.startH + 2);
+        })
+        .filter(c => weekFilter === 'all' || !c.week || c.week === 'all' || c.week === weekFilter);
+
+      gridHtml += `<div class="class-cell">`;
+      if (matched.length > 0) {
+        const c = matched[0];
+        const isOdd = c.week === 'odd';
+        const isEven = c.week === 'even';
+        const badgeHtml = isOdd ? `<span class="c-badge">فرد</span>` : isEven ? `<span class="c-badge">زوج</span>` : '';
+
+        gridHtml += `
+          <div class="class-card border-${d.cls}">
+            <button class="c-del" onclick="deleteClass('${d.key}', ${c.originalIndex})">✕</button>
+            ${badgeHtml}
+            <div class="c-name" style="${(isOdd||isEven)?'margin-right:24px;':''}">${c.name}</div>
+            <div class="c-loc">${c.location || 'کلاس'}</div>
+          </div>
+        `;
+      }
+      gridHtml += `</div>`;
+    });
+  });
+
+  gridHtml += `
+      </div>
+      <div style="margin-top:14px; text-align:center; font-size:11px; color:#94a3b8;">
+        دانیار • برنامه هوشمند دانشگاهی • صورتی = فرد/زوج
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = gridHtml;
+}
+
+function downloadSchedulePng() {
+  triggerHaptic('medium');
+  const target = document.getElementById('captureTarget');
+  
+  if(!target) {
+    showToast('برنامه‌ای برای دانلود وجود ندارد!');
+    return;
+  }
+
+  showToast('در حال ایجاد فایل باکیفیت PNG...');
+
+  html2canvas(target, {
+    backgroundColor: '#f8fafc',
+    scale: 3,
+    useCORS: true
+  }).then(canvas => {
+    const link = document.createElement('a');
+    link.download = `برنامه_هفتگی_${safeGet('danyar_name', 'دانشجو')}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('✅ عکس برنامه ذخیره شد');
+  }).catch(() => {
+    showToast('خطا در تبدیل برنامه به تصویر');
+  });
+}
+
+function processImport() {
+  try {
+    const data = JSON.parse(document.getElementById('jsonInput').value.trim());
+    if(data.schedule) {
+      safeSet('danyar_schedule', data.schedule);
+      if(data.student_name) safeSet('danyar_name', data.student_name);
+      showToast('برنامه با موفقیت ذخیره شد');
+      closeModal('importModal'); renderSchedule(); updateHome(); document.getElementById('jsonInput').value = '';
+    } else throw new Error();
+  } catch(e) { showToast('کد نامعتبر است'); triggerHaptic('error'); }
+}
+
+// ۳. تکالیف
+function renderTasks() {
+  const tasks = safeGet('danyar_tasks', []);
+  const container = document.getElementById('taskListContainer');
+  if(!tasks.length) { container.innerHTML = `<div style="padding:20px; text-align:center; color:var(--label-secondary); font-size:13px;">تکلیفی ثبت نشده</div>`; return; }
+  container.innerHTML = tasks.map((t, i) => `
+    <div class="task-row ${t.done ? 'done' : ''}" onclick="toggleTask(${i})">
+      <div class="check-circle"></div><div class="item-title">${t.text}</div>
+      <button class="task-del" onclick="event.stopPropagation(); delTask(${i})">✕</button>
+    </div>`).join('');
+}
+function addTask() {
+  const input = document.getElementById('taskInput');
+  if(!input.value.trim()) return;
+  const tasks = safeGet('danyar_tasks', []);
+  tasks.unshift({text: input.value.trim(), done:false});
+  safeSet('danyar_tasks', tasks);
+  input.value = ''; triggerHaptic('success'); renderTasks();
+}
+function toggleTask(i) { triggerHaptic(); const tasks = safeGet('danyar_tasks', []); tasks[i].done = !tasks[i].done; safeSet('danyar_tasks', tasks); renderTasks(); }
+function delTask(i) { triggerHaptic('light'); const tasks = safeGet('danyar_tasks', []); tasks.splice(i, 1); safeSet('danyar_tasks', tasks); renderTasks(); }
+
+// ۴. بخش معدل
+let rowCount=0, curGpa=null, curCourses=[], curTerm='ترم ۱';
+let gradeChartInst=null, histChartInst=null;
+let termList = ['ترم ۱','ترم ۲','ترم ۳','ترم ۴','ترم ۵','ترم ۶','ترم ۷','ترم ۸'];
+
+function switchGpaTab(tab) {
+  triggerHaptic();
+  document.querySelectorAll('#pg-gpa .seg-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`gtab-${tab}`).classList.add('active');
+  document.querySelectorAll('.gpa-content-section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`gpat-${tab}`).classList.add('active');
+  if(tab === 'result') renderGpaResult();
+  if(tab === 'history') renderHistory();
+}
+function buildTermBar() {
+  const bar = document.getElementById('termBar'); bar.innerHTML = '';
+  termList.forEach(t => {
+    const btn = document.createElement('button');
+    btn.style.cssText = `padding: 5px 12px; border-radius: 12px; white-space: nowrap; font-size: 12px; font-weight: 600; background: ${t===curTerm?'var(--ios-blue)':'var(--bg-glass-light)'}; color: ${t===curTerm?'#fff':'var(--label-secondary)'}; margin-left: 5px;`;
+    btn.textContent = t;
+    btn.onclick = () => { triggerHaptic(); curTerm=t; document.getElementById('curTermLabel').textContent=t; buildTermBar(); };
+    bar.appendChild(btn);
+  });
+}
+function addNewTerm() { termList.push(`ترم ${termList.length+1}`); buildTermBar(); triggerHaptic(); }
+function removeLastTerm() { if(termList.length>1) { termList.pop(); buildTermBar(); triggerHaptic(); } }
+
+function addGpaRow(n='', u='', g='') {
+  rowCount++; const id = rowCount;
+  const div = document.createElement('div');
+  div.className = 'ios-list-item gpa-row'; div.id = `r-${id}`;
+  div.innerHTML = `
+    <input type="text" class="ios-input gpa-name" placeholder="نام درس" value="${n}" style="width:42%; background:transparent; padding:0; border:none;">
+    <input type="number" class="ios-input gpa-unit" placeholder="واحد" value="${u}" min="1" max="6" style="width:20%; background:transparent; text-align:center; padding:0; border:none;">
+    <input type="number" class="ios-input gpa-score" placeholder="نمره" value="${g}" min="0" max="20" step="0.25" style="width:20%; background:transparent; text-align:center; padding:0; border:none;">
+    <button style="color:var(--ios-red); background:none; font-size:16px; width:10%;" onclick="document.getElementById('r-${id}').remove()">✕</button>
+  `;
+  document.getElementById('coursesList').appendChild(div);
+}
+function initGpaRows() {
+  if(document.getElementById('coursesList').children.length === 0) { addGpaRow(); addGpaRow(); addGpaRow(); buildTermBar(); }
+}
+function calcGpa() {
+  const rows = document.querySelectorAll('.gpa-row');
+  let cs = [];
+  rows.forEach(r => {
+    const name = r.querySelector('.gpa-name').value.trim() || 'درس';
+    const units = parseFloat(r.querySelector('.gpa-unit').value);
+    const grade = parseFloat(r.querySelector('.gpa-score').value);
+    if(!isNaN(units) && !isNaN(grade)) cs.push({name, units, grade});
+  });
+  if(!cs.length) { showToast('نمره و واحد را وارد کنید'); return; }
+  const tu = cs.reduce((s,c)=>s+c.units, 0);
+  const tp = cs.reduce((s,c)=>s+c.units*c.grade, 0);
+  curGpa = tp / tu; curCourses = [...cs];
+  triggerHaptic('success');
+  switchGpaTab('result');
+}
+function renderGpaResult() {
+  if(curGpa === null) return;
+  document.getElementById('gpaResEmpty').style.display = 'none';
+  document.getElementById('gpaResContent').style.display = 'flex';
+  document.getElementById('gpaVal').textContent = curGpa.toFixed(2);
+  
+  const circ = 326.7;
+  setTimeout(() => { document.getElementById('ringFill').style.strokeDashoffset = circ - (circ * Math.min(curGpa / 20, 1)); }, 50);
+
+  const pill = document.getElementById('gpaPill');
+  pill.style.background = curGpa >= 17 ? 'rgba(48,209,88,0.2)' : curGpa >= 14 ? 'rgba(10,132,255,0.2)' : curGpa >= 12 ? 'rgba(255,159,10,0.2)' : 'rgba(255,69,58,0.2)';
+  pill.style.color = curGpa >= 17 ? 'var(--ios-green)' : curGpa >= 14 ? 'var(--ios-blue)' : curGpa >= 12 ? 'var(--ios-orange)' : 'var(--ios-red)';
+  pill.textContent = curGpa >= 17 ? 'ممتاز!' : curGpa >= 14 ? 'قابل قبول' : curGpa >= 12 ? 'مشروط نشدی' : 'مشروط!';
+
+  document.getElementById('sUnits').textContent = curCourses.reduce((s,c)=>s+c.units, 0);
+  document.getElementById('sCnt').textContent = curCourses.length;
+  document.getElementById('sBest').textContent = Math.max(...curCourses.map(c=>c.grade));
+  document.getElementById('sWorst').textContent = Math.min(...curCourses.map(c=>c.grade));
+
+  if(gradeChartInst) gradeChartInst.destroy();
+  const ctx = document.getElementById('gradeChart').getContext('2d');
+  gradeChartInst = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: curCourses.map(c=>c.name), datasets: [{ data: curCourses.map(c=>c.grade), backgroundColor: '#0A84FF', borderRadius: 5 }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'rgba(255,255,255,0.6)'}}, y:{ticks:{color:'rgba(255,255,255,0.6)'}} } }
+  });
+
+  document.getElementById('gpaTable').innerHTML = curCourses.map(c => `
+    <div class="ios-list-item">
+      <div><div class="item-title">${c.name}</div><div class="item-sub">${c.units} واحد</div></div>
+      <div class="item-value">${c.grade}</div>
+    </div>
+  `).join('');
+}
+function saveTerm() {
+  if(curGpa === null) return;
+  const terms = safeGet('danyar_terms', []);
+  const idx = terms.findIndex(t => t.name === curTerm);
+  const item = { name: curTerm, gpa: +curGpa.toFixed(2), units: curCourses.reduce((s,c)=>s+c.units,0), courses: curCourses };
+  if(idx >= 0) terms[idx] = item; else terms.push(item);
+  safeSet('danyar_terms', terms);
+  showToast('💾 ذخیره شد');
+  switchGpaTab('history');
+}
+function calcWhatIf() {
+  triggerHaptic();
+  const u = parseFloat(document.getElementById('wiUnits').value) || 3;
+  const g = parseFloat(document.getElementById('wiGrade').value);
+  if(isNaN(g)) return;
+  const all = [...curCourses, { units: u, grade: g }];
+  if(all.length === 1) { showToast('ابتدا در تب ورودی نمرات را حساب کنید'); return; }
+  const tu = all.reduce((s,c)=>s+c.units,0);
+  const newGpa = all.reduce((s,c)=>s+c.units*c.grade,0) / tu;
+  const res = document.getElementById('wiResult');
+  res.style.display = 'block';
+  res.textContent = `معدل تخمینی: ${newGpa.toFixed(2)}`;
+}
+function renderHistory() {
+  const terms = safeGet('danyar_terms', []);
+  if(!terms.length) return;
+  document.getElementById('histEmpty').style.display = 'none';
+  document.getElementById('histContent').style.display = 'flex';
+  const tu = terms.reduce((s,t)=>s+t.units, 0);
+  const tp = terms.reduce((s,t)=>s+t.gpa*t.units, 0);
+  document.getElementById('overallGpa').textContent = (tp/tu).toFixed(2);
+  document.getElementById('overallUnits').textContent = `مجموع ${tu} واحد از ${terms.length} ترم`;
+
+  if(histChartInst) histChartInst.destroy();
+  const ctx = document.getElementById('histChart').getContext('2d');
+  histChartInst = new Chart(ctx, {
+    type: 'line',
+    data: { labels: terms.map(t=>t.name), datasets: [{ data: terms.map(t=>t.gpa), borderColor: '#BF5AF2', tension:0.3, fill: false }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:'rgba(255,255,255,0.6)'}}, y:{ticks:{color:'rgba(255,255,255,0.6)'}} } }
+  });
+
+  document.getElementById('termsList').innerHTML = terms.map(t => `
+    <div class="ios-card" style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px;">
+      <div><div style="font-weight:700;">${t.name}</div><div style="font-size:12px; color:var(--label-secondary);">${t.units} واحد</div></div>
+      <div style="font-size:22px; font-weight:800; color:var(--ios-purple);">${t.gpa}</div>
+    </div>
+  `).join('');
+}
+
+// ۵. پومودورو
+let pomoTime = 25 * 60, pomoInterval = null, isPomoRunning = false;
+function setPomo(mins) {
+  triggerHaptic();
+  document.getElementById('pmo-btn-25').classList.remove('active');
+  document.getElementById('pmo-btn-5').classList.remove('active');
+  document.getElementById(`pmo-btn-${mins}`).classList.add('active');
+  clearInterval(pomoInterval);
+  isPomoRunning = false;
+  pomoTime = mins * 60;
+  updatePomoDisplay();
+  document.getElementById('pomoPlayBtn').textContent = 'شروع';
+  document.getElementById('pomoPlayBtn').style.background = 'var(--ios-green)';
+}
+function updatePomoDisplay() {
+  const m = Math.floor(pomoTime / 60).toString().padStart(2, '0');
+  const s = (pomoTime % 60).toString().padStart(2, '0');
+  document.getElementById('pomoDisplay').textContent = `${m}:${s}`;
+}
+function togglePomo() {
+  triggerHaptic();
+  const btn = document.getElementById('pomoPlayBtn');
+  if(isPomoRunning) {
+    clearInterval(pomoInterval);
+    isPomoRunning = false;
+    btn.textContent = 'ادامه';
+    btn.style.background = 'var(--ios-blue)';
+  } else {
+    isPomoRunning = true;
+    btn.textContent = 'توقف';
+    btn.style.background = 'var(--ios-orange)';
+    pomoInterval = setInterval(() => {
+      pomoTime--;
+      updatePomoDisplay();
+      if(pomoTime <= 0) {
+        clearInterval(pomoInterval);
+        isPomoRunning = false;
+        triggerHaptic('heavy');
+        showToast('زمان تمام شد!');
+        setPomo(document.getElementById('pmo-btn-25').classList.contains('active') ? 25 : 5);
+      }
+    }, 1000);
+  }
+}
+function resetPomo() { triggerHaptic(); const is25 = document.getElementById('pmo-btn-25').classList.contains('active'); setPomo(is25 ? 25 : 5); }
+
+window.addEventListener('DOMContentLoaded', () => { updateHome(); });
+</script>
+</body>
+</html>
